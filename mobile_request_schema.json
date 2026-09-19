@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VideoProcessingRequest",
+  "description": "Payload, ktorý mobilná aplikácia (napr. Apple Shortcuts alebo web formulár) posiela na POST /webhook/process-video",
+  "type": "object",
+  "required": ["source_video_url", "format"],
+  "properties": {
+    "source_video_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Verejne dostupná URL na surové video (napr. presigned S3 alebo Supabase Storage link)",
+      "example": "https://your-bucket.s3.amazonaws.com/uploads/raw_video_123.mp4"
+    },
+    "format": {
+      "type": "string",
+      "enum": ["vertical", "horizontal", "square"],
+      "description": "vertical=9:16 (Reels/TikTok/Shorts), horizontal=16:9 (YouTube/Web/TV), square=1:1 (FB/LinkedIn)"
+    },
+    "features": {
+      "type": "object",
+      "properties": {
+        "remove_background": { "type": "boolean", "default": false },
+        "add_captions": { "type": "boolean", "default": true },
+        "caption_language": { "type": "string", "enum": ["sk", "en"], "default": "sk" },
+        "add_b_roll": { "type": "boolean", "default": false },
+        "add_music": { "type": "boolean", "default": false },
+        "add_sfx": { "type": "boolean", "default": false },
+        "smart_crop": { "type": "boolean", "default": true }
+      }
+    },
+    "brand_color": {
+      "type": "string",
+      "description": "Hex farba pre titulky a brand prvky",
+      "example": "#FF4D4D"
+    },
+    "font_family": {
+      "type": "string",
+      "example": "Montserrat ExtraBold"
+    },
+    "callback_push_token": {
+      "type": "string",
+      "description": "Token zariadenia pre push notifikáciu po dokončení renderu (voliteľné)"
+    }
+  },
+  "examples": [
+    {
+      "source_video_url": "https://your-bucket.s3.amazonaws.com/uploads/raw_video_123.mp4",
+      "format": "vertical",
+      "features": {
+        "remove_background": true,
+        "add_captions": true,
+        "caption_language": "sk",
+        "add_b_roll": true,
+        "add_music": true,
+        "add_sfx": false,
+        "smart_crop": true
+      },
+      "brand_color": "#FF4D4D",
+      "font_family": "Montserrat ExtraBold",
+      "callback_push_token": "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]"
+    }
+  ]
+}
