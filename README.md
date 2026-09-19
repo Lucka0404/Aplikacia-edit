@@ -1,0 +1,1 @@
+# Aplikacia-edit
