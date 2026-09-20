@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Video Dispatch — ovládací panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EFE8D8;
+    --paper-alt: #E4DBC6;
+    --ink: #1B1B1B;
+    --ink-soft: #55503F;
+    --crimson: #C4223A;
+    --crimson-dim: #9C1B2F;
+    --denim: #33587A;
+    --line: #C9C2AE;
+    --ok: #2F6B4F;
+    --err: #C4223A;
+    --card-shadow: none;
+    color-scheme: light dark;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #17140F;
+      --paper-alt: #201C15;
+      --ink: #F1EAD9;
+      --ink-soft: #B8AF98;
+      --line: #40392C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #17140F;
+    --paper-alt: #201C15;
+    --ink: #F1EAD9;
+    --ink-soft: #B8AF98;
+    --line: #40392C;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif;
+    min-height: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 0 18px 60px; }
+
+  /* ---- MASTHEAD ---- */
+  header.masthead {
+    padding: calc(env(safe-area-inset-top,0px) + 22px) 18px 18px;
+    border-bottom: 3px solid var(--ink);
+    background:
+      radial-gradient(circle, var(--ink) 0.6px, transparent 0.7px) 0 0/10px 10px,
+      var(--paper);
+    opacity: 1;
+  }
+  .masthead-inner { max-width: 560px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: clamp(28px, 8vw, 38px);
+    line-height: 0.92;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .masthead .dateline { font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+  .lang-switch { display: flex; border: 2px solid var(--ink); border-radius: 999px; overflow: hidden; flex-shrink: 0; }
+  .lang-switch button {
+    border: none; background: transparent; color: var(--ink);
+    font-family: 'Inter'; font-weight: 700; font-size: 12px;
+    padding: 6px 12px; cursor: pointer;
+  }
+  .lang-switch button.active { background: var(--ink); color: var(--paper); }
+
+  /* ---- SECTIONS ---- */
+  section { margin-top: 26px; }
+  .section-label {
+    display: flex; align-items: baseline; gap: 10px;
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 19px;
+    margin-bottom: 10px;
+  }
+  .section-label .num { font-size: 13px; color: var(--crimson); font-weight: 700; }
+  .section-hint { font-size: 13px; color: var(--ink-soft); margin: -4px 0 12px; line-height: 1.5; }
+
+  /* ---- INPUTS ---- */
+  label.field-label { display:block; font-size: 12px; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px; }
+  input[type="text"], input[type="url"] {
+    width: 100%; padding: 13px 14px; font-size: 15px; font-family: 'Inter';
+    border: 2px solid var(--ink); background: var(--paper-alt); color: var(--ink);
+    border-radius: 4px; outline: none;
+  }
+  input:focus-visible { outline: 2px solid var(--crimson); outline-offset: 2px; }
+  .field { margin-bottom: 14px; }
+
+  /* ---- FORMAT TABS (film-strip) ---- */
+  .format-strip { display: flex; gap: 8px; }
+  .format-tab {
+    flex: 1; border: 2px solid var(--ink); background: var(--paper-alt);
+    color: var(--ink); border-radius: 4px; padding: 12px 6px; text-align: center;
+    cursor: pointer; font-family: 'Inter'; font-weight: 600; font-size: 13px;
+  }
+  .format-tab .ratio { display:block; font-family:'Fraunces'; font-size: 20px; font-weight: 700; margin-bottom: 2px;}
+  .format-tab.active { background: var(--ink); color: var(--paper); }
+
+  /* ---- TOGGLE ROWS (logsheet) ---- */
+  .logsheet { border-top: 2px solid var(--ink); }
+  .toggle-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 2px; border-bottom: 1px solid var(--line);
+  }
+  .toggle-row .t-label { font-size: 15px; font-weight: 600; }
+  .toggle-row .t-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .switch { position: relative; width: 46px; height: 27px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 100%; height: 100%; margin:0; position:absolute; cursor:pointer; }
+  .slider {
+    position: absolute; inset: 0; background: var(--line); border-radius: 999px;
+    transition: background .15s ease; border: 2px solid var(--ink);
+  }
+  .slider::before {
+    content: ""; position: absolute; width: 17px; height: 17px; left: 2px; top: 2px;
+    background: var(--paper); border-radius: 50%; transition: transform .15s ease;
+  }
+  .switch input:checked + .slider { background: var(--crimson); }
+  .switch input:checked + .slider::before { transform: translateX(19px); background: var(--paper); }
+
+  .sub-choice { display: flex; gap: 8px; margin-top: 8px; }
+  .sub-choice button {
+    border: 2px solid var(--ink); background: transparent; color: var(--ink);
+    border-radius: 999px; padding: 5px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .sub-choice button.active { background: var(--ink); color: var(--paper); }
+
+  /* ---- ADVANCED (collapsible) ---- */
+  details.advanced { border-top: 2px solid var(--ink); padding-top: 4px; }
+  details.advanced summary {
+    cursor: pointer; font-weight: 700; padding: 12px 2px; list-style: none;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  details.advanced summary::-webkit-details-marker { display: none; }
+  details.advanced summary .chev { transition: transform .15s ease; }
+  details.advanced[open] summary .chev { transform: rotate(180deg); }
+
+  /* ---- PRO STYLE CARD ---- */
+  .pro-card {
+    border: 2px solid var(--ink); border-radius: 4px; padding: 16px; margin-top: 6px;
+    background: var(--paper-alt);
+    clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+  }
+  .pro-stamp {
+    display: inline-block; font-family:'Fraunces'; font-weight: 900; font-size: 11px;
+    color: var(--paper); background: var(--crimson); padding: 3px 9px; border-radius: 3px;
+    transform: rotate(-2deg); margin-bottom: 10px; letter-spacing: 0.02em;
+  }
+  .pro-card p { font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); margin: 6px 0 12px; }
+  textarea.prompt-box {
+    width: 100%; min-height: 130px; font-family: 'Inter'; font-size: 12.5px; line-height: 1.5;
+    padding: 12px; border: 2px solid var(--ink); border-radius: 4px; background: var(--paper);
+    color: var(--ink); resize: vertical;
+  }
+  .copy-btn {
+    margin-top: 8px; border: 2px solid var(--ink); background: transparent; color: var(--ink);
+    padding: 8px 14px; border-radius: 999px; font-weight: 700; font-size: 12px; cursor: pointer;
+  }
+  .copy-btn.copied { background: var(--ok); border-color: var(--ok); color: var(--paper); }
+
+  /* ---- SUBMIT ---- */
+  .submit-btn {
+    width: 100%; padding: 17px; margin-top: 30px; border: none; border-radius: 4px;
+    background: var(--crimson); color: var(--paper); font-family: 'Fraunces'; font-weight: 700;
+    font-size: 18px; cursor: pointer;
+  }
+  .submit-btn:active { background: var(--crimson-dim); }
+  .submit-btn:disabled { opacity: 0.5; }
+
+  /* ---- STATUS ---- */
+  .status-card {
+    margin-top: 18px; border: 2px solid var(--ink); border-radius: 4px; padding: 14px 16px;
+    display: none;
+  }
+  .status-card.visible { display: block; }
+  .status-stage { font-weight: 700; font-size: 14px; }
+  .status-detail { font-size: 12.5px; color: var(--ink-soft); margin-top: 4px; }
+  .status-card.error { border-color: var(--err); }
+  .status-card.done { border-color: var(--ok); }
+  .video-link {
+    display: inline-block; margin-top: 10px; background: var(--ink); color: var(--paper);
+    text-decoration: none; padding: 10px 16px; border-radius: 999px; font-weight: 700; font-size: 13px;
+  }
+
+  footer { text-align: center; font-size: 11px; color: var(--ink-soft); margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div>
+      <h1 id="t-title">VIDEO<br>DISPATCH</h1>
+      <div class="dateline" id="t-dateline">Ovládací panel · AI video pipeline</div>
+    </div>
+    <div class="lang-switch">
+      <button id="btn-sk" class="active" onclick="setLang('sk')">SK</button>
+      <button id="btn-en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 1. BACKEND -->
+  <section>
+    <div class="section-label"><span class="num">01</span><span id="t-s1">Server</span></div>
+    <div class="field">
+      <label class="field-label" id="t-s1-label">URL tvojho backendu (Render/Railway)</label>
+      <input type="url" id="backendUrl" placeholder="https://tvoj-server.onrender.com">
+    </div>
+  </section>
+
+  <!-- 2. VIDEO -->
+  <section>
+    <div class="section-label"><span class="num">02</span><span id="t-s2">Video</span></div>
+    <div class="field">
+      <label class="field-label" id="t-s2-label">URL surového videa</label>
+      <input type="url" id="videoUrl" placeholder="https://.../raw_video.mp4">
+    </div>
+  </section>
+
+  <!-- 3. FORMAT -->
+  <section>
+    <div class="section-label"><span class="num">03</span><span id="t-s3">Formát</span></div>
+    <div class="format-strip">
+      <div class="format-tab active" data-format="vertical" onclick="pickFormat('vertical')">
+        <span class="ratio">9:16</span><span id="t-f-vertical">Reels / TikTok</span>
+      </div>
+      <div class="format-tab" data-format="horizontal" onclick="pickFormat('horizontal')">
+        <span class="ratio">16:9</span><span id="t-f-horizontal">YouTube / TV</span>
+      </div>
+      <div class="format-tab" data-format="square" onclick="pickFormat('square')">
+        <span class="ratio">1:1</span><span id="t-f-square">Feed</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. FEATURES -->
+  <section>
+    <div class="section-label"><span class="num">04</span><span id="t-s4">Funkcie</span></div>
+    <div class="logsheet" id="feature-list"></div>
+  </section>
+
+  <!-- 5. PRO STYLE -->
+  <section>
+    <div class="section-label"><span class="num">05</span><span id="t-s5">Pro štýl</span></div>
+    <div class="section-hint" id="t-s5-hint">
+      Manuálny krok navyše — nie je súčasťou automatického renderu, spúšťa sa samostatne v Google Flow (Omni model).
+    </div>
+    <div class="pro-card">
+      <span class="pro-stamp" id="t-pro-stamp">EDITORIAL COLLAGE</span>
+      <p id="t-pro-desc">
+        Štýl "novinový strih" — koláž z čiernobielych výstrižkov, polaroidov a rastrových textúr, rýchle kinetické
+        prechody. Vlož vlastné video do Google Flow spolu s týmto promptom (VO a zvuk ostávajú nezmenené).
+      </p>
+      <label class="field-label" id="t-pro-label">Prompt na kopírovanie</label>
+      <textarea class="prompt-box" id="proPrompt" readonly></textarea>
+      <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">Kopírovať prompt</button>
+    </div>
+  </section>
+
+  <!-- ADVANCED -->
+  <details class="advanced">
+    <summary><span id="t-adv">Rozšírené nastavenia</span><span class="chev">▾</span></summary>
+    <div class="field" style="margin-top:10px;">
+      <label class="field-label" id="t-adv-color">Brand farba (hex)</label>
+      <input type="text" id="brandColor" value="#FF4D4D">
+    </div>
+    <div class="field">
+      <label class="field-label" id="t-adv-font">Font titulkov</label>
+      <input type="text" id="fontFamily" value="Montserrat ExtraBold">
+    </div>
+  </details>
+
+  <button class="submit-btn" id="submitBtn" onclick="submitJob()">
+    <span id="t-submit">Spustiť spracovanie</span>
+  </button>
+
+  <div class="status-card" id="statusCard">
+    <div class="status-stage" id="statusStage"></div>
+    <div class="status-detail" id="statusDetail"></div>
+  </div>
+
+  <footer id="t-footer">Video Dispatch — jednoduchý ovládací panel pre tvoju vlastnú pipeline.</footer>
+</div>
+
+<script>
+/* ============================= I18N ============================= */
+const DICT = {
+  sk: {
+    title: "VIDEO<br>DISPATCH", dateline: "Ovládací panel · AI video pipeline",
+    s1: "Server", s1label: "URL tvojho backendu (Render/Railway)",
+    s2: "Video", s2label: "URL surového videa",
+    s3: "Formát", fv: "Reels / TikTok", fh: "YouTube / TV", fs: "Feed",
+    s4: "Funkcie",
+    s5: "Pro štýl",
+    s5hint: "Manuálny krok navyše — nie je súčasťou automatického renderu, spúšťa sa samostatne v Google Flow (Omni model).",
+    proStamp: "EDITORIAL COLLAGE",
+    proDesc: "Štýl \"novinový strih\" — koláž z čiernobielych výstrižkov, polaroidov a rastrových textúr, rýchle kinetické prechody. Vlož vlastné video do Google Flow spolu s týmto promptom (VO a zvuk ostávajú nezmenené).",
+    proLabel: "Prompt na kopírovanie",
+    copy: "Kopírovať prompt", copied: "Skopírované ✓",
+    adv: "Rozšírené nastavenia", advColor: "Brand farba (hex)", advFont: "Font titulkov",
+    submit: "Spustiť spracovanie", submitting: "Odosielam…",
+    footer: "Video Dispatch — jednoduchý ovládací panel pre tvoju vlastnú pipeline.",
+    features: {
+      remove_background: ["Odstrániť pozadie", "Rozmazanie alebo výmena pozadia"],
+      add_captions: ["Titulky", "Automatický prepis a vypálenie titulkov"],
+      add_b_roll: ["B-roll", "Automatické stock zábery k obsahu"],
+      add_music: ["Hudba na pozadí", "Generatívna hudba s auto-duckingom"],
+      add_sfx: ["Zvukové efekty", "Prechody a emoji zvuky"],
+      smart_crop: ["Inteligentný crop", "Sledovanie tváre pri oreze"],
+    },
+    lang_caption: "Jazyk titulkov",
+    err_url: "Zadaj URL backendu aj URL videa.",
+    stage_queued: "Vo fronte…", stage_processing_audio: "Spracúvam zvuk (Whisper)…",
+    stage_analyzing_content: "Analyzujem obsah…", stage_gathering_assets: "Zbieram assety (B-roll/hudba)…",
+    stage_removing_background: "Odstraňujem pozadie…", stage_building_edit: "Zostavujem strih…",
+    stage_rendering: "Renderujem video…", stage_done: "Hotovo! 🎬", stage_failed: "Zlyhalo",
+    open_video: "Otvoriť video", generic_error: "Nastala chyba pri komunikácii so serverom.",
+  },
+  en: {
+    title: "VIDEO<br>DISPATCH", dateline: "Control panel · AI video pipeline",
+    s1: "Server", s1label: "Your backend URL (Render/Railway)",
+    s2: "Video", s2label: "Raw video URL",
+    s3: "Format", fv: "Reels / TikTok", fh: "YouTube / TV", fs: "Feed",
+    s4: "Features",
+    s5: "Pro style",
+    s5hint: "Extra manual step — not part of the automated render, run separately in Google Flow (Omni model).",
+    proStamp: "EDITORIAL COLLAGE",
+    proDesc: "\"Newspaper cutout\" style — collage of black-and-white clippings, polaroids and halftone textures, fast kinetic transitions. Drop your own video into Google Flow together with this prompt (voiceover and audio stay untouched).",
+    proLabel: "Prompt to copy",
+    copy: "Copy prompt", copied: "Copied ✓",
+    adv: "Advanced settings", advColor: "Brand color (hex)", advFont: "Caption font",
+    submit: "Start processing", submitting: "Sending…",
+    footer: "Video Dispatch — a simple control panel for your own pipeline.",
+    features: {
+      remove_background: ["Remove background", "Blur or swap the background"],
+      add_captions: ["Captions", "Auto transcription and burned-in subtitles"],
+      add_b_roll: ["B-roll", "Automatic stock footage matched to content"],
+      add_music: ["Background music", "Generative music with auto-ducking"],
+      add_sfx: ["Sound effects", "Transition and emoji sound cues"],
+      smart_crop: ["Smart crop", "Face-tracking aware cropping"],
+    },
+    lang_caption: "Caption language",
+    err_url: "Enter both the backend URL and the video URL.",
+    stage_queued: "Queued…", stage_processing_audio: "Processing audio (Whisper)…",
+    stage_analyzing_content: "Analyzing content…", stage_gathering_assets: "Gathering assets (B-roll/music)…",
+    stage_removing_background: "Removing background…", stage_building_edit: "Building the edit…",
+    stage_rendering: "Rendering video…", stage_done: "Done! 🎬", stage_failed: "Failed",
+    open_video: "Open video", generic_error: "Something went wrong talking to the server.",
+  }
+};
+
+const PRO_PROMPT = `TASK
+EDIT this video using the following specifications. Apply visual editing only—preserve the original voiceover and audio exactly as is.
+
+STRICT RULE
+Do not change or alter the voice over and audio in any circumstance.
+
+INPUT
+Original voiceover video (to preserve exact VO, timing, and length) + Reference image (if provided)
+
+ANIMATION
+[agile stop-motion 12fps, no motion blur]
+
+TYPOGRAPHY
+[fast pop-up kinetic, bold condensed]
+
+CAMERA
+[dynamic fast zooms, punch-ins, whip-pan transitions]
+
+MOVEMENT
+[organic paper cutout with visible drop shadow shifts, zoom in zoom out effect]
+
+AESTHETIC
+[mixed media collage, dark grey newspaper cutouts, polaroids, halftone textures, characters cutout photo on 2D illustration bodies]
+
+FEEL
+[highly energetic, bold, tactile, professional content]
+
+VISUAL STRUCTURE
+30% talking head (illustrated/collage-style, stays consistent throughout) + 70% supporting elements that POP IN individually with fast kinetic animation. Elements animate one-by-one, layering around the talking head. Do NOT transition between full panels—animate individual elements sequentially.
+
+TEXT & CAPTIONS
+Use ONLY exact text, headers, and labels from the reference image (if provided). Each text element pops in separately with fast kinetic animation. Maintain bold chunky typography exactly as shown. Do NOT duplicate word captions. If no reference image: generate supporting visual elements that match the voiceover content.`;
+
+let lang = localStorage.getItem('vd_lang') || 'sk';
+
+function t(key) { return DICT[lang][key]; }
+
+function renderTexts() {
+  document.getElementById('t-title').innerHTML = t('title');
+  document.getElementById('t-dateline').textContent = t('dateline');
+  document.getElementById('t-s1').textContent = t('s1');
+  document.getElementById('t-s1-label').textContent = t('s1label');
+  document.getElementById('t-s2').textContent = t('s2');
+  document.getElementById('t-s2-label').textContent = t('s2label');
+  document.getElementById('t-s3').textContent = t('s3');
+  document.getElementById('t-f-vertical').textContent = t('fv');
+  document.getElementById('t-f-horizontal').textContent = t('fh');
+  document.getElementById('t-f-square').textContent = t('fs');
+  document.getElementById('t-s4').textContent = t('s4');
+  document.getElementById('t-s5').textContent = t('s5');
+  document.getElementById('t-s5-hint').textContent = t('s5hint');
+  document.getElementById('t-pro-stamp').textContent = t('proStamp');
+  document.getElementById('t-pro-desc').textContent = t('proDesc');
+  document.getElementById('t-pro-label').textContent = t('proLabel');
+  document.getElementById('copyBtn').textContent = t('copy');
+  document.getElementById('t-adv').textContent = t('adv');
+  document.getElementById('t-adv-color').textContent = t('advColor');
+  document.getElementById('t-adv-font').textContent = t('advFont');
+  document.getElementById('t-submit').textContent = t('submit');
+  document.getElementById('t-footer').textContent = t('footer');
+  document.getElementById('proPrompt').value = PRO_PROMPT;
+  renderFeatures();
+  document.getElementById('btn-sk').classList.toggle('active', lang === 'sk');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.documentElement.lang = lang;
+}
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('vd_lang', l);
+  renderTexts();
+}
+
+/* ============================= STATE ============================= */
+const state = {
+  format: 'vertical',
+  features: {
+    remove_background: false,
+    add_captions: true,
+    caption_language: 'sk',
+    add_b_roll: false,
+    add_music: false,
+    add_sfx: false,
+    smart_crop: true,
+  }
+};
+
+function pickFormat(f) {
+  state.format = f;
+  document.querySelectorAll('.format-tab').forEach(el => {
+    el.classList.toggle('active', el.dataset.format === f);
+  });
+}
+
+const FEATURE_ORDER = ['remove_background','add_captions','add_b_roll','add_music','add_sfx','smart_crop'];
+
+function renderFeatures() {
+  const container = document.getElementById('feature-list');
+  container.innerHTML = '';
+  FEATURE_ORDER.forEach(key => {
+    const [label, sub] = t('features')[key];
+    const row = document.createElement('div');
+    row.className = 'toggle-row';
+    const checked = state.features[key] ? 'checked' : '';
+    row.innerHTML = `
+      <div>
+        <div class="t-label">${label}</div>
+        <div class="t-sub">${sub}</div>
+        ${key === 'add_captions' ? `<div class="sub-choice" id="capLangChoice" style="${state.features.add_captions ? '' : 'display:none;'}">
+          <button data-l="sk" class="${state.features.caption_language==='sk'?'active':''}" onclick="setCapLang('sk')">SK</button>
+          <button data-l="en" class="${state.features.caption_language==='en'?'active':''}" onclick="setCapLang('en')">EN</button>
+        </div>` : ''}
+      </div>
+      <label class="switch">
+        <input type="checkbox" ${checked} onchange="toggleFeature('${key}', this.checked)">
+        <span class="slider"></span>
+      </label>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function toggleFeature(key, val) {
+  state.features[key] = val;
+  if (key === 'add_captions') {
+    const el = document.getElementById('capLangChoice');
+    if (el) el.style.display = val ? 'flex' : 'none';
+  }
+}
+
+function setCapLang(l) {
+  state.features.caption_language = l;
+  renderFeatures();
+}
+
+/* ============================= COPY PROMPT ============================= */
+function copyPrompt() {
+  const box = document.getElementById('proPrompt');
+  box.select();
+  box.setSelectionRange(0, 999999);
+  try {
+    navigator.clipboard.writeText(PRO_PROMPT);
+  } catch (e) {
+    document.execCommand('copy');
+  }
+  const btn = document.getElementById('copyBtn');
+  const original = btn.textContent;
+  btn.textContent = t('copied');
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1600);
+}
+
+/* ============================= PERSIST BACKEND/VIDEO URL ============================= */
+const backendInput = document.getElementById('backendUrl');
+const videoInput = document.getElementById('videoUrl');
+backendInput.value = localStorage.getItem('vd_backend') || '';
+videoInput.value = localStorage.getItem('vd_video') || '';
+backendInput.addEventListener('change', () => localStorage.setItem('vd_backend', backendInput.value.trim()));
+videoInput.addEventListener('change', () => localStorage.setItem('vd_video', videoInput.value.trim()));
+
+/* ============================= SUBMIT + POLL ============================= */
+let pollTimer = null;
+
+async function submitJob() {
+  const backend = backendInput.value.trim().replace(/\/$/, '');
+  const video = videoInput.value.trim();
+  const statusCard = document.getElementById('statusCard');
+  const stageEl = document.getElementById('statusStage');
+  const detailEl = document.getElementById('statusDetail');
+
+  if (!backend || !video) {
+    statusCard.className = 'status-card visible error';
+    stageEl.textContent = t('err_url');
+    detailEl.textContent = '';
+    return;
+  }
+
+  const payload = {
+    source_video_url: video,
+    format: state.format,
+    features: { ...state.features },
+    brand_color: document.getElementById('brandColor').value.trim() || '#FF4D4D',
+    font_family: document.getElementById('fontFamily').value.trim() || 'Montserrat ExtraBold',
+  };
+
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  document.getElementById('t-submit').textContent = t('submitting');
+
+  statusCard.className = 'status-card visible';
+  stageEl.textContent = t('stage_queued');
+  detailEl.textContent = '';
+
+  try {
+    const resp = await fetch(backend + '/webhook/process-video', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    pollStatus(backend, data.job_id);
+  } catch (err) {
+    statusCard.className = 'status-card visible error';
+    stageEl.textContent = t('generic_error');
+    detailEl.textContent = String(err.message || err);
+    resetSubmit();
+  }
+}
+
+function resetSubmit() {
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('t-submit').textContent = t('submit');
+}
+
+function pollStatus(backend, jobId) {
+  const statusCard = document.getElementById('statusCard');
+  const stageEl = document.getElementById('statusStage');
+  const detailEl = document.getElementById('statusDetail');
+
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    try {
+      const resp = await fetch(backend + '/webhook/status/' + jobId);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      const stageKey = 'stage_' + data.status;
+      stageEl.textContent = DICT[lang][stageKey] || data.status;
+      detailEl.textContent = 'Job ID: ' + jobId;
+
+      if (data.status === 'done') {
+        clearInterval(pollTimer);
+        statusCard.className = 'status-card visible done';
+        detailEl.innerHTML = `<a class="video-link" href="${data.render_url}" target="_blank" rel="noopener">${t('open_video')}</a>`;
+        resetSubmit();
+      } else if (data.status === 'failed') {
+        clearInterval(pollTimer);
+        statusCard.className = 'status-card visible error';
+        detailEl.textContent = data.error || t('generic_error');
+        resetSubmit();
+      }
+    } catch (err) {
+      clearInterval(pollTimer);
+      statusCard.className = 'status-card visible error';
+      stageEl.textContent = t('generic_error');
+      detailEl.textContent = String(err.message || err);
+      resetSubmit();
+    }
+  }, 4000);
+}
+
+renderTexts();
+</script>
+</body>
+</html>
